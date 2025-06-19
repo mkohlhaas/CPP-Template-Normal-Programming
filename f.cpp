@@ -277,7 +277,7 @@ is_this_really_a_pointer(T)
 
 // Specialize on a complex condition
 
-namespace wrong
+namespace bad
 {
     template <typename Element>
     struct tree_iterator
@@ -324,9 +324,9 @@ namespace wrong
     {
         return begin + n;
     }
-} // namespace wrong
+} // namespace bad
 
-namespace right
+namespace good
 {
     template <typename Element>
     struct tree_iterator
@@ -377,35 +377,40 @@ namespace right
     auto
     advance(Iter begin, int n)
     {
-        // NOTE: `typename` is necessary.
-        // NOTE:We instantiate a value of type Iter::supports_plus (you can use `()` or `{}`). See below.
+        // NOTE: `typename` is not strictly necessary in C++20.
+        // NOTE: We instantiate a value of type Iter::supports_plus (you can use `()` or `{}`). See below.
         return advance_impl(begin, n, typename Iter::supports_plus());
     }
-} // namespace right
+} // namespace good
 
 // Dependent names
 
 // C++'s grammar is not context-free.
 
+// Actually compiler can distinguish what is a declaration and a function call.
+
 template <typename T>
 void
 foo3(int x)
 {
-    // If T::A is a function, this is a function call, e.g. f(x).
+    // If T::A is a function, this is a function call, i.e. A(x).
     T::A(x);
 }
 
 template <typename T>
 void
-foo4()
+foo4(int x)
 {
-    // If T::A is a type, this is a declaration, e.g. int(x).
-    typename T::A(x);
+    // If T::A is a type, this is a declaration, i.e. `int(y)`, same as `int y`.
+    typename T::A(y);
+
+    (void)x;
+    (void)y;
 }
 
 struct S1
 {
-    static void A(int);
+    static void A(int) {};
 };
 
 struct S2
@@ -428,7 +433,7 @@ main()
     std::cout << std::max(static_cast<int>(f2()), 42) << std::endl; // cast (too verbose)
     std::cout << std::max<int>(f2(), 42) << std::endl;              // make template paarameters explicit
 
-    add1<int, int>('x', 3.1);
+    add1<int, int>('x', static_cast<int>(3.1));
     add1<int>('x', 3.1);
     add1<>('x', 3.1);
     add1('x', 3.1);
@@ -449,7 +454,7 @@ main()
 
     f5(i);
 
-    // deduce T such that T&& is the target category (r-value/l-value)
+    // Deduce T such that T&& is the target category (r-value/l-value).
     // Another way to put it: What is T such that T&& leads to target type?
     f6(42);           // r-value ref (42 = int&& = target category) -> T = int (T&& would also work)
                       // What is T such that T&& = int &&? -> T = int
@@ -482,15 +487,15 @@ main()
     // f8(static_cast<int &&>(i));    // error
     f8(static_cast<const int &&>(i)); // ok (!)
 
-    // If you have a function that expects a const l-value and you pass it an r-value, then this is absolutely fine.
-    // R-values are kind of like const l-values.
+    // You can pass an r-value ref to a function expecting a const l-value ref.
+    // r-values are kind of like const l-values.
 
-    // Passing an r-value to a function expecting an l-value is not allowed
+    // Passing an r-value ref to a function expecting an l-value ref is not allowed
     f9(i);
     // f9(42);           // error
     // f9(std::move(i)); // error
 
-    // Passing an r-value to a function expecting a const l-value is allowed !!!
+    // Passing an r-value ref to a function expecting a const l-value ref is allowed !!!
     f10(i);
     f10(42);
     f10(std::move(i));
@@ -507,18 +512,18 @@ main()
     A<void>    a3 [[maybe_unused]];                 // uses full specialization
 
     // Kind of Template | Type deduction happens ? | Full specialization allowed ? | Partial specialization allowed ? |
-    // ----------------------------------------------------------------------------------------------------------------
+    // -----------------+--------------------------+-------------------------------+-----------------------------------
     // Function         |         Yes              |            Yes                |             No                   |
     // Class            |         No               |            Yes                |             Yes                  |
     // Variable         |         No               |            Yes                |             Yes                  |
     // Alias            |         No               |            No                 |             No                   |
-    // ----------------------------------------------------------------------------------------------------------------
+    // -----------------+--------------------------+-------------------------------+-----------------------------------
 
     // Variable templates are actually special kind of class templates.
 
     std::cout << is_this_really_a_pointer(i) << std::endl;  // false
     std::cout << is_this_really_a_pointer(&i) << std::endl; // true
 
-    foo3<S2>(0);
-    foo4<S1>(0);
+    foo3<S1>(0);
+    foo4<S2>(0);
 }
