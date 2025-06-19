@@ -519,7 +519,7 @@ main()
     // Alias            |         No               |            No                 |             No                   |
     // -----------------+--------------------------+-------------------------------+-----------------------------------
 
-    // Variable templates are actually special kind of class templates.
+    // Variable templates are actually special kind of class templates. (Class templates with static member variable.)
 
     std::cout << is_this_really_a_pointer(i) << std::endl;  // false
     std::cout << is_this_really_a_pointer(&i) << std::endl; // true
