@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <stdexcept>
+#include <type_traits>
 
 #define PROJECT_NAME "f"
 
@@ -245,7 +246,7 @@ is_pointer(void *)
 
 // How to partially specialize a function
 
-// primary template
+// primary templatejj
 template <typename T>
 struct is_pointer_impl
 {
@@ -273,6 +274,144 @@ is_this_really_a_pointer(T)
 {
     return is_pointer_impl<T>::_();
 }
+
+// Specialize on a complex condition
+
+namespace wrong
+{
+    template <typename Element>
+    struct tree_iterator
+    {
+        tree_iterator &operator++(); // NOTE: inside definition of class template the <> are not needed.
+                                     // Otherwise we had to write `tree_iterator<Element>)`
+    };
+
+    template <typename Element>
+    struct vector_iterator
+    {
+        vector_iterator &operator++();
+        vector_iterator  operator+();
+    };
+
+    template <typename Element>
+    struct vector
+    {
+        using iterator = vector_iterator<Element>;
+    };
+
+    template <typename Element>
+    struct tree
+    {
+        using iterator = tree_iterator<Element>;
+    };
+
+    template <typename Iter>
+    Iter
+    advance(Iter begin, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            ++begin;
+        }
+        return begin;
+    }
+
+    // advance specialized for vectors
+    // WRONG: function templates cannot be partially specialized -> Don't do it!
+    template <typename Element>
+    vector_iterator<Element>
+    advance(vector_iterator<Element> begin, int n)
+    {
+        return begin + n;
+    }
+} // namespace wrong
+
+namespace right
+{
+    template <typename Element>
+    struct tree_iterator
+    {
+        tree_iterator &operator++();
+        using supports_plus = std::false_type;
+    };
+
+    template <typename Element>
+    struct vector_iterator
+    {
+        vector_iterator &operator++();
+        vector_iterator  operator+();
+        using supports_plus = std::true_type;
+    };
+
+    template <typename Element>
+    struct vector
+    {
+        using iterator = vector_iterator<Element>;
+    };
+
+    template <typename Element>
+    struct tree
+    {
+        using iterator = tree_iterator<Element>;
+    };
+
+    template <typename Iter>
+    Iter
+    advance_impl(Iter begin, int n, std::false_type)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            ++begin;
+        }
+        return begin;
+    }
+
+    template <typename Iter>
+    Iter
+    advance_impl(Iter begin, int n, std::true_type)
+    {
+        return begin + n;
+    }
+
+    template <typename Iter>
+    auto
+    advance(Iter begin, int n)
+    {
+        // NOTE: `typename` is necessary.
+        // NOTE:We instantiate a value of type Iter::supports_plus (you can use `()` or `{}`). See below.
+        return advance_impl(begin, n, typename Iter::supports_plus());
+    }
+} // namespace right
+
+// Dependent names
+
+// C++'s grammar is not context-free.
+
+template <typename T>
+void
+foo3(int x)
+{
+    // If T::A is a function, this is a function call, e.g. f(x).
+    T::A(x);
+}
+
+template <typename T>
+void
+foo4()
+{
+    // If T::A is a type, this is a declaration, e.g. int(x).
+    typename T::A(x);
+}
+
+struct S1
+{
+    static void A(int);
+};
+
+struct S2
+{
+    using A = int;
+};
 
 int
 main()
@@ -379,4 +518,7 @@ main()
 
     std::cout << is_this_really_a_pointer(i) << std::endl;  // false
     std::cout << is_this_really_a_pointer(&i) << std::endl; // true
+
+    foo3<S2>(0);
+    foo4<S1>(0);
 }
