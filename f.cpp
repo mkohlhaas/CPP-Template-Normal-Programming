@@ -83,6 +83,7 @@ f5(T &) // l-value ref
     puts(__PRETTY_FUNCTION__);
 }
 
+// forwarding references work with everything and always
 template <typename T>
 void
 f6(T &&) // universal/forwarding reference
@@ -99,6 +100,23 @@ f7(void (*)(T))
 
 void
 g(int &&) // r-value ref (NOT universal/forwarding ref!)
+{
+}
+
+template <typename T>
+void
+f8(T &)
+{
+    puts(__PRETTY_FUNCTION__);
+}
+
+void
+f9(int &)
+{
+}
+
+void
+f10(const int &)
 {
 }
 
@@ -153,4 +171,34 @@ main()
     // && + && = &&
 
     f7(g); // T = int&& is the only solution
+
+    // l-value references
+    f8(static_cast<int &>(i)); // ok
+    // f8(static_cast<int &&>(i));    // error
+    f8(static_cast<const int &&>(i)); // ok (!)
+
+    // l-value references with volatile
+    f8(static_cast<int &>(i));          // ok
+    f8(static_cast<volatile int &>(i)); // ok
+    // f8(static_cast<int &&>(i));          // error
+    // f8(static_cast<volatile int &&>(i)); // error
+
+    // l-value references with const
+    f8(static_cast<int &>(i));       // ok
+    f8(static_cast<const int &>(i)); // ok
+    // f8(static_cast<int &&>(i));    // error
+    f8(static_cast<const int &&>(i)); // ok (!)
+
+    // If you have a function that expects a const l-value and you pass it an r-value, then this is absolutely fine.
+    // R-values are kind of like const l-values.
+
+    // Passing an r-value to a function expecting an l-value is not allowed
+    f9(i);
+    // f9(42);           // error
+    // f9(std::move(i)); // error
+
+    // Passing an r-value to a function expecting a const l-value is allowed !!!
+    f10(i);
+    f10(42);
+    f10(std::move(i));
 }
