@@ -1,6 +1,9 @@
 #include <algorithm>
 #include <array>
+#include <climits>
+#include <cstdio>
 #include <iostream>
+#include <stdexcept>
 
 #define PROJECT_NAME "f"
 
@@ -120,6 +123,157 @@ f10(const int &)
 {
 }
 
+// primary template
+template <typename T>
+struct is_void
+{
+    static constexpr bool value = false;
+};
+
+// explicit/full specialization (empty angle brackets <>)
+template <>
+struct is_void<void>
+{
+    static constexpr bool value = true;
+};
+
+// Defining a template specialization
+template <typename T>
+T
+abs(T x)
+{
+    return (x >= 0) ? x : -x;
+}
+
+// explicit/full specialization (<>)
+template <>
+int
+// abs<int>(int x)
+// abs<>(int x)
+abs(int x) // what you see most often in practice but only syntactic sugar for the long forms above
+{
+    if (x == INT_MIN)
+    {
+        throw std::domain_error("oops");
+    }
+
+    return (x >= 0) ? x : -x;
+}
+
+// Partial specialization
+
+// primary template
+template <typename T>
+constexpr bool is_array = false;
+
+// partial specialization
+template <typename T>
+constexpr bool is_array<T[]> = true; // uses primary template
+
+// partial specialization (number of template params is completely unrelated to primary template!)
+template <typename T, int N>
+constexpr bool is_array<T[N]> = true; // uses primary template
+
+// explicit/full specialization (empy <>)
+template <>
+constexpr bool is_array<void> = true;
+
+// Which specialization is called ?
+
+// primary template
+template <typename T>
+class A
+{
+};
+
+// explicit/full specialization
+template <>
+class A<void>
+{
+};
+
+// partial specialization
+template <typename T>
+class A<T *>
+{
+};
+
+// partial specialization
+template <typename T>
+class A<T **>
+{
+};
+
+// Function templates cannot be partially specialized !
+
+template <typename T>
+bool
+is_pointer(T)
+{
+    return false;
+}
+
+// this is NOT a partial specialization
+template <typename T>
+bool
+is_pointer(T *)
+{
+    return true;
+}
+
+// We have two primary function templates in the same overload set. Dangerous! (See below.)
+// Keep in mind:
+// Syntax for full specialization starts always with `template <>`.
+// Syntax for partial specialization always contains angle brackets after the template name (is_pointer in this case)
+// !!!
+
+// full specialization
+template <>
+bool
+is_pointer(void *)
+{
+    puts(__PRETTY_FUNCTION__);
+    return true;
+}
+
+// Depending where you put the full specialization (after first or second primary function template) you get possibly
+// different behavior. Dangerous!
+// If you put the full specialization after first primary function template it will be a specialization for the first
+// primary template.
+// If you put the full specialization after second primary function template it will be a specialization for the second
+// primary template.
+
+// How to partially specialize a function
+
+// primary template
+template <typename T>
+struct is_pointer_impl
+{
+    static bool
+    _()
+    {
+        return false;
+    }
+};
+
+// partial specialization (classes can be partially specialized, functions can not)
+template <typename T>
+struct is_pointer_impl<T *>
+{
+    static bool
+    _()
+    {
+        return true;
+    }
+};
+
+template <typename T>
+bool
+is_this_really_a_pointer(T)
+{
+    return is_pointer_impl<T>::_();
+}
+
 int
 main()
 {
@@ -201,4 +355,28 @@ main()
     f10(i);
     f10(42);
     f10(std::move(i));
+
+    std::cout << std::boolalpha;
+    std::cout << is_void<int>::value << std::endl;  // false
+    std::cout << is_void<void>::value << std::endl; // true
+
+    std::cout << is_array<int> << std::endl;        // false
+    std::cout << is_array<int[]> << std::endl;      // true
+
+    A<int *>   a1 [[maybe_unused]];                 // uses 1st partial specialization
+    A<int ***> a2 [[maybe_unused]];                 // uses 2nd partial specialization
+    A<void>    a3 [[maybe_unused]];                 // uses full specialization
+
+    // Kind of Template | Type deduction happens ? | Full specialization allowed ? | Partial specialization allowed ? |
+    // ----------------------------------------------------------------------------------------------------------------
+    // Function         |         Yes              |            Yes                |             No                   |
+    // Class            |         No               |            Yes                |             Yes                  |
+    // Variable         |         No               |            Yes                |             Yes                  |
+    // Alias            |         No               |            No                 |             No                   |
+    // ----------------------------------------------------------------------------------------------------------------
+
+    // Variable templates are actually special kind of class templates.
+
+    std::cout << is_this_really_a_pointer(i) << std::endl;  // false
+    std::cout << is_this_really_a_pointer(&i) << std::endl; // true
 }
