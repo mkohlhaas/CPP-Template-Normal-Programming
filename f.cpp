@@ -218,7 +218,7 @@ namespace many_people_have_seen_this
     short
     f()
     {
-        return 99;
+        return 42;
     };
 
 } // namespace many_people_have_seen_this
@@ -229,6 +229,7 @@ namespace call_a_specialization_explicitly
     T
     abs(T x)
     {
+        puts(__PRETTY_FUNCTION__);
         return (x >= 0) ? x : -x;
     }
 
@@ -584,6 +585,7 @@ namespace bad_tag_dispatch
     {
         return begin + n;
     }
+
 } // namespace bad_tag_dispatch
 
 namespace good_tag_dispatch
@@ -641,6 +643,7 @@ namespace good_tag_dispatch
         // NOTE: We instantiate a value of type Iter::supports_plus (you can use `()` or `{}`). See below.
         return advance_impl(begin, n, typename Iter::supports_plus());
     }
+
 } // namespace good_tag_dispatch
 
 namespace dependent_names
@@ -675,6 +678,7 @@ namespace dependent_names
     {
         using A = int;
     };
+
 } // namespace dependent_names
 
 namespace refer_to_template
@@ -694,6 +698,7 @@ namespace refer_to_template
         {
         }
     };
+
 } // namespace refer_to_template
 
 int
@@ -704,8 +709,11 @@ main()
         // Functions that differ only in their return type cannot be overloaded.
 
         using namespace function_overloading;
-        f1(42);
-        f1(42.0);
+
+        std::cout << "=== Function Overloading\n" << std::endl;
+
+        f1(42);   // 42
+        f1(42.0); // 42
     }
 
     {
@@ -714,8 +722,10 @@ main()
 
         using namespace motivation;
 
-        std::cout << abs(-42.0) << std::endl;
-        std::cout << abs(-42.f) << std::endl;
+        std::cout << "\n=== Motivation\n" << std::endl;
+
+        std::cout << abs(-42.0) << std::endl; // 42
+        std::cout << abs(-42.f) << std::endl; // 42
 
         // std::cout << abs(-42) << std::endl; // error: Call to 'abs' is ambiguous
     }
@@ -723,16 +733,20 @@ main()
     {
         using namespace function_templates;
 
-        std::cout << myabs(-42.0) << std::endl;
-        std::cout << myabs<int>(-42) << std::endl;
-        std::cout << myabs(-42) << std::endl;
+        std::cout << "\n=== Function Templates\n" << std::endl;
+
+        std::cout << myabs(-42.0) << std::endl;    // 42
+        std::cout << myabs<int>(-42) << std::endl; // 42
+        std::cout << myabs(-42) << std::endl;      // 42
 
         double (*foo)(double) = myabs<double>;
-        std::cout << foo(-42.0) << std::endl;
+        std::cout << foo(-42.0) << std::endl;      // 42
     }
 
     {
         using namespace class_templates;
+
+        std::cout << "\n=== Class Templates\n" << std::endl;
 
         mylist<int>    *intlist [[maybe_unused]]{};
         mylist<double> *doublelist [[maybe_unused]]{};
@@ -741,8 +755,10 @@ main()
     {
         using namespace classes_are_still_classes;
 
-        std::cout << S::sdm << std::endl;
-        std::cout << ST<char>::sdm << std::endl;
+        std::cout << "\n=== Class are still Classes\n" << std::endl;
+
+        std::cout << S::sdm << std::endl;        // 42
+        std::cout << ST<char>::sdm << std::endl; // 42
     }
 
     {
@@ -750,6 +766,8 @@ main()
         // A variable template is exactly 100% equivalent to a static data member of a class template.
 
         using namespace variable_templates;
+
+        std::cout << "\n=== Variable Templates\n" << std::endl;
 
         std::cout << std::boolalpha;
         std::cout << is_void<int>::value << std::endl; // false
@@ -759,6 +777,8 @@ main()
     {
         using namespace best_of_both_worlds;
 
+        std::cout << "\n=== Best of both worlds in the STL\n" << std::endl;
+
         std::cout << std::boolalpha;
         std::cout << is_void<int>::value << std::endl; // false
         std::cout << is_void_v<int> << std::endl;      // false
@@ -767,12 +787,16 @@ main()
     {
         using namespace alias_templates;
 
+        std::cout << "\n=== Alias Templates\n" << std::endl;
+
         static_assert(std::is_same_v<myvec_double, std::vector<double>>);
         static_assert(std::is_same_v<myvec<double>, std::vector<double>>);
     }
 
     {
         using namespace literally_the_same_type;
+
+        std::cout << "\n=== Literally the same type\n" << std::endl;
 
         int i{};
         f(i); // OK because myint is int
@@ -784,28 +808,34 @@ main()
     {
         using namespace type_deduction;
 
+        std::cout << "\n=== Type Deduction\n" << std::endl;
+
         double (*f)(double) = abs<double>;
 
-        std::cout << f(-42.0) << std::endl;
-        std::cout << abs<int>(-42) << std::endl;
+        std::cout << f(-42.0) << std::endl;      // 42
+        std::cout << abs<int>(-42) << std::endl; // 42
     }
 
     {
         using namespace rules_of_template_type_deduction;
 
-        foo(4);       // void foo(T) [T = int]
-        foo(4.2);     // void foo(T) [T = double]
-        foo("hello"); // void foo(T) [T = const char *]
+        std::cout << "\n=== Rules of Template Type Deduction\n" << std::endl;
 
-        f(1, 2);      // void f(T, U) [T = int, U = int]
-        g(1, 2);      // void g(T, T) [T = int]
+        foo(4);       // [T = int]
+        foo(4.2);     // [T = double]
+        foo("hello"); // [T = const char *]
+
+        f(1, 2);      // [T = int, U = int]
+        g(1, 2);      // [T = int]
         // g(1, 2u);  // error: no matching function for call to g(int, unsigned int)
     }
 
     {
         using namespace puzzle_1;
 
-        foo(std::array<int, 8>{},    //
+        std::cout << "\n=== Puzzle #1\n" << std::endl;
+
+        foo(std::array<int, 8>{},    // [T = int; U = double]
             std::array<double, 4>{}, //
             0.0);
 
@@ -815,7 +845,9 @@ main()
     {
         using namespace puzzle_2;
 
-        foo(+[](double x) { return int(x); });
+        std::cout << "\n=== Puzzle #2\n" << std::endl;
+
+        foo(+[](double x) { return int(x); }); // [with R = int; A = double]
 
         // foo([](double x) { return int(x); }); // error
     }
@@ -823,18 +855,23 @@ main()
     {
         using namespace many_people_have_seen_this;
 
+        std::cout << "\n=== Many People have seen this\n" << std::endl;
+
         // std::max(f(), 42);                    // error: No matching function for call to 'max'
 
-        // workarounds:
-        std::cout << std::max(static_cast<int>(f()), 42) << std::endl; // cast (too verbose)
-        std::cout << std::max<int>(f(), 42) << std::endl;              // make template paarameters explicit
+        // cast (too verbose)
+        std::cout << std::max(static_cast<int>(f()), 24) << std::endl; // 42
+        // make template paarameters explicit
+        std::cout << std::max<int>(f(), 24) << std::endl; // 42
     }
 
     {
         using namespace call_a_specialization_explicitly;
 
-        std::cout << abs<int>('x') << std::endl;  // [T = int]
-        std::cout << abs<double>(3) << std::endl; // [T = double]
+        std::cout << "\n=== Call a Specialization explicitly\n" << std::endl;
+
+        std::cout << abs<int>('x') << std::endl;  // [T = int]    | 120
+        std::cout << abs<double>(3) << std::endl; // [T = double] | 3
 
         add<int, int>('x', 3.1);                  // [T = int, U = int]
         add<int>('x', 3.1);                       // [T = int, U = double]
@@ -845,6 +882,8 @@ main()
     {
         using namespace default_template_parameters;
 
+        std::cout << "\n=== Default Template Parameters\n" << std::endl;
+
         add<int>(); // [T = int]
         add<>();    // [T = char *]
         add();      // [T = char *]
@@ -853,20 +892,26 @@ main()
     {
         using namespace template_type_deduction_real_deal_1;
 
+        std::cout << "\n=== Template Type Deduction #1\n" << std::endl;
+
         int i{};
-        f(i);  // void f(T) [with T = int]
-        f(&i); // void f(T) [with T = int]
+        f(i);  // [T = int]
+        f(&i); // [T = int]
     }
 
     {
         using namespace template_type_deduction_real_deal_2;
 
+        std::cout << "\n=== Template Type Deduction #2\n" << std::endl;
+
         int i{};
-        f(i); // void f(T) [with T = int]
+        f(i); // [T = int]
     }
 
     {
         using namespace template_type_deduction_real_deal_3;
+
+        std::cout << "\n=== Template Type Deduction #3\n" << std::endl;
 
         // Combining two reference types mins the number of ampersands (reference collapsing):
         // &  +  & =  &
@@ -875,34 +920,40 @@ main()
         // && + && = &&
 
         int i{};
-        f(42);           // void f(T&&) [with T = int]
-        f(std::move(i)); // void f(T&&) [with T = int]
-        f(i);            // void f(T&&) [with T = int&]
+        f(42);           // [T = int]
+        f(std::move(i)); // [T = int]
+        f(i);            // [T = int&]
     }
 
     {
         using namespace case_in_which_refref_is_deduced;
 
-        f(g); // [with T=int&&]
+        std::cout << "\n=== Case in which && is deduced\n" << std::endl;
+
+        f(g); // [T=int&&]
     }
 
     {
         using namespace reference_and_cv_collapsing;
 
+        std::cout << "\n=== Reference and CV-Collapsing\n" << std::endl;
+
         const int i = 42;
-        f(i);            // [with T=const int&]
-        f(std::move(i)); // [with T=const int]
+        f(i);            // [T=const int&]
+        f(std::move(i)); // [T=const int]
     }
 
     {
         using namespace deducing_Tref_not_Trefref;
 
-        int i = 42;
-        f(static_cast<int &>(i));          // [with T=int]
-        f(static_cast<volatile int &>(i)); // [with T=volatile int]
+        std::cout << "\n=== Deducing T&, not T&&\n" << std::endl;
 
-        f(static_cast<const int &>(i));    // [with T=const int]
-        f(static_cast<const int &&>(i));   // [with T=const int] (!)
+        int i = 42;
+        f(static_cast<int &>(i));          // [T=int]
+        f(static_cast<volatile int &>(i)); // [T=volatile int]
+
+        f(static_cast<const int &>(i));    // [T=const int]
+        f(static_cast<const int &&>(i));   // [T=const int] (!)
 
         // f(static_cast<int &&>(i));          // ERROR
         // f(static_cast<volatile int &&>(i)); // ERROR
@@ -911,15 +962,19 @@ main()
     {
         using namespace rvalues_are_kinda_like_const_lvalues;
 
+        std::cout << "\n=== r-Values are kinda like const lvalues\n" << std::endl;
+
         int i = 42;
-        f(static_cast<int &>(i));        // ok
-        f(static_cast<const int &>(i));  // ok
-        f(static_cast<const int &&>(i)); // ok
+        f(static_cast<int &>(i));        // [T = int]
+        f(static_cast<const int &>(i));  // [T = const int]
+        f(static_cast<const int &&>(i)); // [T = const int]
         // f(static_cast<int &&>(i));    // error
     }
 
     {
         using namespace defining_a_template_specialization_1;
+
+        std::cout << "\n=== Defining a Template Specialization #1\n" << std::endl;
 
         std::cout << is_void<int>::value << std::endl;  // false
         std::cout << is_void<void>::value << std::endl; // true
@@ -928,12 +983,16 @@ main()
     {
         using namespace partial_specialization_1;
 
+        std::cout << "\n=== Partial Specialization #1\n" << std::endl;
+
         std::cout << is_array<int> << std::endl;   // false
         std::cout << is_array<int[]> << std::endl; // true
     }
 
     {
         using namespace partial_specialization_2;
+
+        std::cout << "\n=== Partial Specialization #2\n" << std::endl;
 
         std::cout << is_array<int> << std::endl;    // false
         std::cout << is_array<int[]> << std::endl;  // true
@@ -942,6 +1001,8 @@ main()
 
     {
         using namespace which_specialization_is_called;
+
+        std::cout << "\n=== Which Specialization is being called ?\n" << std::endl;
 
         A<int>     a1 [[maybe_unused]]; // uses primary
         A<int *>   a2 [[maybe_unused]]; // uses 1st partial specialization
