@@ -277,7 +277,7 @@ is_this_really_a_pointer(T)
 
 // Specialize on a complex condition
 
-namespace bad
+namespace bad_tag_dispatch
 {
     template <typename Element>
     struct tree_iterator
@@ -324,9 +324,9 @@ namespace bad
     {
         return begin + n;
     }
-} // namespace bad
+} // namespace bad_tag_dispatch
 
-namespace good
+namespace good_tag_dispatch
 {
     template <typename Element>
     struct tree_iterator
@@ -381,42 +381,60 @@ namespace good
         // NOTE: We instantiate a value of type Iter::supports_plus (you can use `()` or `{}`). See below.
         return advance_impl(begin, n, typename Iter::supports_plus());
     }
-} // namespace good
+} // namespace good_tag_dispatch
 
-// Dependent names
-
-// C++'s grammar is not context-free.
-
-// Actually compiler can distinguish what is a declaration and a function call.
-
-template <typename T>
-void
-foo3(int x)
+namespace dependent_names
 {
-    // If T::A is a function, this is a function call, i.e. A(x).
-    T::A(x);
-}
+    // Actually compiler can distinguish what is a declaration and a function call.
 
-template <typename T>
-void
-foo4(int x)
+    template <typename T>
+    void
+    foo3(int x)
+    {
+        // If T::A is a function, this is a function call, i.e. A(x).
+        T::A(x);
+    }
+
+    template <typename T>
+    void
+    foo4(int x)
+    {
+        // If T::A is a type, this is a declaration, i.e. `int(y)`, same as `int y`.
+        typename T::A(y);
+
+        (void)x;
+        (void)y;
+    }
+
+    struct S1
+    {
+        static void A(int) {};
+    };
+
+    struct S2
+    {
+        using A = int;
+    };
+} // namespace dependent_names
+
+namespace refer_to_template
 {
-    // If T::A is a type, this is a declaration, i.e. `int(y)`, same as `int y`.
-    typename T::A(y);
+    template <typename T>
+    void
+    foo(int x)
+    {
+        T::template A<0>(x);
+    }
 
-    (void)x;
-    (void)y;
-}
-
-struct S1
-{
-    static void A(int) {};
-};
-
-struct S2
-{
-    using A = int;
-};
+    struct S2
+    {
+        template <int N>
+        static void
+        A(int)
+        {
+        }
+    };
+} // namespace refer_to_template
 
 int
 main()
@@ -524,6 +542,22 @@ main()
     std::cout << is_this_really_a_pointer(i) << std::endl;  // false
     std::cout << is_this_really_a_pointer(&i) << std::endl; // true
 
-    foo3<S1>(0);
-    foo4<S2>(0);
+    {
+        // Dependent names
+
+        // C++'s grammar is not context-free.
+
+        using namespace dependent_names;
+
+        foo3<S1>(0);
+        foo4<S2>(0);
+    }
+
+    {
+        // Similarly to refer to a template
+
+        using namespace refer_to_template;
+
+        foo<S2>(42);
+    }
 }
