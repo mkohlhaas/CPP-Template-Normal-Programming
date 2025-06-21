@@ -21,3 +21,21 @@ int abs(int);
 extern template
 int abs(int);
 ```
+
+- Explicit deduction guides
+
+```cpp
+template <typename T>
+struct myvec
+{
+    myvec(T t);
+    myvec(double d);
+};
+
+myvec(double) -> myvec<int>; // deduction guide (can also be templated)
+
+int main()
+{
+    myvec v(1.0); // we want this to resolve to myvec<int> instead of myvec<double>
+}
+```

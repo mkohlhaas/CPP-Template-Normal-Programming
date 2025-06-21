@@ -33,6 +33,9 @@ namespace function_overloading
 
 namespace motivation
 {
+
+    // We need a separate function for every data type.
+
     double
     abs(double x)
     {
@@ -55,6 +58,9 @@ namespace motivation
 
 namespace function_templates
 {
+    // Templates are cookie cutters.
+    // You don't pay for what you don't use.
+
     template <typename T>
     T
     myabs(T x)
@@ -75,7 +81,7 @@ namespace class_templates
 
 } // namespace class_templates
 
-namespace classes_are_still_classes
+namespace template_classes_are_still_classes
 {
     // normal struct
     struct S
@@ -92,19 +98,22 @@ namespace classes_are_still_classes
         static int sdm;
     };
 
+    // static members must be defined somewhere (like static members in normal structs)
     template <class T>
     int ST<T>::sdm = 42;
 
-} // namespace classes_are_still_classes
+} // namespace template_classes_are_still_classes
 
 namespace variable_templates
 {
+    // class template
     template <typename T>
     struct is_void
     {
         static const bool value = false;
     };
 
+    // variable template
     template <typename T>
     const bool is_void_v = false;
 
@@ -125,8 +134,10 @@ namespace best_of_both_worlds
 
 namespace alias_templates
 {
+    // you could use old style typedefs instead
     using myvec_double = std::vector<double>;
 
+    // but not here
     template <typename T>
     using myvec = std::vector<T>;
 
@@ -213,7 +224,7 @@ namespace puzzle_2
 
 } // namespace puzzle_2
 
-namespace many_people_have_seen_this
+namespace how_many_people_have_seen_this
 {
     short
     f()
@@ -221,9 +232,9 @@ namespace many_people_have_seen_this
         return 42;
     };
 
-} // namespace many_people_have_seen_this
+} // namespace how_many_people_have_seen_this
 
-namespace call_a_specialization_explicitly
+namespace how_to_call_a_specialization_explicitly
 {
     template <typename T>
     T
@@ -240,7 +251,7 @@ namespace call_a_specialization_explicitly
         puts(__PRETTY_FUNCTION__);
     }
 
-} // namespace call_a_specialization_explicitly
+} // namespace how_to_call_a_specialization_explicitly
 
 namespace default_template_parameters
 {
@@ -255,6 +266,7 @@ namespace default_template_parameters
 
 namespace template_type_deduction_real_deal_1
 {
+    // value
     template <typename T>
     void
     f(T)
@@ -262,6 +274,7 @@ namespace template_type_deduction_real_deal_1
         puts(__PRETTY_FUNCTION__);
     }
 
+    // pointer
     template <typename T>
     void
     f(T *)
@@ -273,6 +286,7 @@ namespace template_type_deduction_real_deal_1
 
 namespace template_type_deduction_real_deal_2
 {
+    // reference
     template <typename T>
     void
     f(T &)
@@ -284,9 +298,10 @@ namespace template_type_deduction_real_deal_2
 
 namespace template_type_deduction_real_deal_3
 {
+    // forwarding/universal reference
     template <typename T>
     void
-    f(T &&)
+    f(T &&) // can only be a reference (either r-value or l-value reference - && or &)
     {
         puts(__PRETTY_FUNCTION__);
     }
@@ -416,23 +431,27 @@ namespace partial_specialization_2
 
 namespace which_specialization_is_called
 {
+    // primary template
     template <typename T>
-    class A
+    class A // no <..>
     {
     };
 
-    template <>
-    class A<void>
+    // full specialization
+    template <>   // empty <>
+    class A<void> // uses primary template with <..>
     {
     };
 
-    template <typename Tp>
-    class A<Tp *>
+    // partial specialization
+    template <typename T>
+    class A<T *> // uses primary template with <..>
     {
     };
 
-    template <typename Tp>
-    class A<Tp **>
+    // partial specialization
+    template <typename T>
+    class A<T **> // uses primary template with <..>
     {
     };
 
@@ -440,7 +459,8 @@ namespace which_specialization_is_called
 
 namespace function_templates_cannot_be_partially_specialized_1
 {
-    // Function templates cannot be partially specialized !
+    // Function templates cannot be partially specialized!
+    // Only full/explicit specialization allowed !
 
     template <typename T>
     bool
@@ -523,20 +543,14 @@ namespace how_to_partially_specialize_a_function
 
     template <typename T>
     bool
-    is_this_really_a_pointer(T)
+    is_pointer(T)
     {
         return is_pointer_impl<T>::_();
     }
 
 } // namespace how_to_partially_specialize_a_function
 
-// Kind of Template | Type deduction | Full specialization allowed ? | Partial specialization allowed ? |
-// -----------------+----------------+-------------------------------+-----------------------------------
-//     Function     |     Yes        |            Yes                |             No                   |
-//     Class        |     No         |            Yes                |             Yes                  |
-//     Variable     |     No         |            Yes                |             Yes                  |
-//     Alias        |     No         |            No                 |             No                   |
-// -----------------+----------------+-------------------------------+-----------------------------------
+// Begin Part 2
 
 namespace bad_tag_dispatch
 {
@@ -704,6 +718,8 @@ namespace refer_to_template
 int
 main()
 {
+    std::cout << std::boolalpha;
+
     {
         // function overloading (params are significant)
         // Functions that differ only in their return type cannot be overloaded.
@@ -733,7 +749,7 @@ main()
     {
         using namespace function_templates;
 
-        std::cout << "\n=== Function Templates\n" << std::endl;
+        std::cout << "\n=== Using a Function Template\n" << std::endl;
 
         std::cout << myabs(-42.0) << std::endl;    // 42
         std::cout << myabs<int>(-42) << std::endl; // 42
@@ -753,23 +769,22 @@ main()
     }
 
     {
-        using namespace classes_are_still_classes;
+        using namespace template_classes_are_still_classes;
 
-        std::cout << "\n=== Class are still Classes\n" << std::endl;
+        std::cout << "\n=== Template Classes are still Classes\n" << std::endl;
 
         std::cout << S::sdm << std::endl;        // 42
         std::cout << ST<char>::sdm << std::endl; // 42
     }
 
     {
-        // Variable templates are syntactic sugar.
+        // Variable templates are syntactic sugar for class templates.
         // A variable template is exactly 100% equivalent to a static data member of a class template.
 
         using namespace variable_templates;
 
         std::cout << "\n=== Variable Templates\n" << std::endl;
 
-        std::cout << std::boolalpha;
         std::cout << is_void<int>::value << std::endl; // false
         std::cout << is_void_v<int> << std::endl;      // false
     }
@@ -779,7 +794,6 @@ main()
 
         std::cout << "\n=== Best of both worlds in the STL\n" << std::endl;
 
-        std::cout << std::boolalpha;
         std::cout << is_void<int>::value << std::endl; // false
         std::cout << is_void_v<int> << std::endl;      // false
     }
@@ -849,11 +863,13 @@ main()
 
         foo(+[](double x) { return int(x); }); // [with R = int; A = double]
 
+        // captureless lambda is always IMPLICITLY convertible to a function pointer.
+        // But templates DO NOT use implicit conversions!
         // foo([](double x) { return int(x); }); // error
     }
 
     {
-        using namespace many_people_have_seen_this;
+        using namespace how_many_people_have_seen_this;
 
         std::cout << "\n=== Many People have seen this\n" << std::endl;
 
@@ -861,19 +877,23 @@ main()
 
         // cast (too verbose)
         std::cout << std::max(static_cast<int>(f()), 24) << std::endl; // 42
+
         // make template paarameters explicit
         std::cout << std::max<int>(f(), 24) << std::endl; // 42
     }
 
     {
-        using namespace call_a_specialization_explicitly;
+        using namespace how_to_call_a_specialization_explicitly;
+
+        // template parameters in angle brackets, <...>.
+        // function parameters in round brackets, (...).
 
         std::cout << "\n=== Call a Specialization explicitly\n" << std::endl;
 
         std::cout << abs<int>('x') << std::endl;  // [T = int]    | 120
         std::cout << abs<double>(3) << std::endl; // [T = double] | 3
 
-        add<int, int>('x', 3.1);                  // [T = int, U = int]
+        add<int, double>('x', 3.1);               // [T = int, U = double]
         add<int>('x', 3.1);                       // [T = int, U = double]
         add<>('x', 3.1);                          // [T = char, U = double]
         add('x', 3.1);                            // [T = char, U = double]
@@ -892,7 +912,7 @@ main()
     {
         using namespace template_type_deduction_real_deal_1;
 
-        std::cout << "\n=== Template Type Deduction #1\n" << std::endl;
+        std::cout << "\n=== Template Type Deduction #1 (Value and Pointer)\n" << std::endl;
 
         int i{};
         f(i);  // [T = int]
@@ -902,7 +922,7 @@ main()
     {
         using namespace template_type_deduction_real_deal_2;
 
-        std::cout << "\n=== Template Type Deduction #2\n" << std::endl;
+        std::cout << "\n=== Template Type Deduction #2 (Reference)\n" << std::endl;
 
         int i{};
         f(i); // [T = int]
@@ -911,7 +931,7 @@ main()
     {
         using namespace template_type_deduction_real_deal_3;
 
-        std::cout << "\n=== Template Type Deduction #3\n" << std::endl;
+        std::cout << "\n=== Template Type Deduction #3 (Forwarding/Universal Reference)\n" << std::endl;
 
         // Combining two reference types mins the number of ampersands (reference collapsing):
         // &  +  & =  &
@@ -920,9 +940,17 @@ main()
         // && + && = &&
 
         int i{};
-        f(42);           // [T = int]
+        // we pass r-value reference
+        f(42); // [T = int]
+        // 42 = int&& -> T = int, bc T&& = int&& = type of 42/type of param
+
+        // we pass r-value reference
         f(std::move(i)); // [T = int]
-        f(i);            // [T = int&]
+        // std::move(i) = int&& -> T = int, bc T&& = int&& = type of std::move(i)/type of param
+
+        // we pass l-value reference
+        f(i); // [T = int&]
+        // i = int& -> T = int&, bc T&& = int& + && = int& = type of i/type of param
     }
 
     {
@@ -936,7 +964,7 @@ main()
     {
         using namespace reference_and_cv_collapsing;
 
-        std::cout << "\n=== Reference and CV-Collapsing\n" << std::endl;
+        std::cout << "\n=== Forwarding/Universal Reference and CV-Collapsing\n" << std::endl;
 
         const int i = 42;
         f(i);            // [T=const int&]
@@ -946,16 +974,28 @@ main()
     {
         using namespace deducing_Tref_not_Trefref;
 
+        // Forwarding references (T&&) are too easy. Everything works with them.
+
         std::cout << "\n=== Deducing T&, not T&&\n" << std::endl;
 
         int i = 42;
-        f(static_cast<int &>(i));          // [T=int]
+
+        // pass l-value ref
+        f(static_cast<int &>(i)); // [T=int]
+
+        // pass volatile l-value ref
         f(static_cast<volatile int &>(i)); // [T=volatile int]
 
-        f(static_cast<const int &>(i));    // [T=const int]
-        f(static_cast<const int &&>(i));   // [T=const int] (!)
+        // pass const l-value ref
+        f(static_cast<const int &>(i)); // [T=const int]
 
+        // pass const r-value ref
+        f(static_cast<const int &&>(i)); // NOTE: [T=const int] (!)
+
+        // pass r-value ref
         // f(static_cast<int &&>(i));          // ERROR
+
+        // pass volatile r-value ref
         // f(static_cast<volatile int &&>(i)); // ERROR
     }
 
@@ -965,9 +1005,17 @@ main()
         std::cout << "\n=== r-Values are kinda like const lvalues\n" << std::endl;
 
         int i = 42;
-        f(static_cast<int &>(i));        // [T = int]
-        f(static_cast<const int &>(i));  // [T = const int]
+
+        // pass l-value ref
+        f(static_cast<int &>(i)); // [T = int]
+
+        // pass const l-value ref
+        f(static_cast<const int &>(i)); // [T = const int]
+
+        // pass const r-value ref (acts like const l-value ref)
         f(static_cast<const int &&>(i)); // [T = const int]
+
+        // pass r-value ref
         // f(static_cast<int &&>(i));    // error
     }
 
@@ -1010,100 +1058,43 @@ main()
         A<void>    a4 [[maybe_unused]]; // uses full specialization
     }
 
-    // {
-    //     // Deduce T such that T&& is the target category (r-value/l-value).
-    //     // Another way to put it: What is T such that T&& leads to target type?
-    //     f6(42);           // r-value ref (42 = int&& = target category) -> T = int (T&& would also work)
-    //                       // What is T such that T&& = int &&? -> T = int
-    //     f6(std::move(i)); // same as previous
-    //     f6(i);            // l-value ref (i = int& = target category) -> T = int&
-    //                       // What is T such that T&& = int&? -> T = int&
-    //
-    //                       // Combining two reference types mins the number of ampersands (reference collapsing):
-    //     // &  +  & =  &
-    //     // &  + && =  &
-    //     // && +  & =  &
-    //     // && + && = &&
-    //
-    //     f7(g); // T = int&& is the only solution
-    //
-    //     // l-value references
-    //     f8(static_cast<int &>(i)); // ok
-    //     // f8(static_cast<int &&>(i));    // error
-    //     f8(static_cast<const int &&>(i)); // ok (!)
-    //
-    //     // l-value references with volatile
-    //     f8(static_cast<int &>(i));          // ok
-    //     f8(static_cast<volatile int &>(i)); // ok
-    //     // f8(static_cast<int &&>(i));          // error
-    //     // f8(static_cast<volatile int &&>(i)); // error
-    //
-    //     // l-value references with const
-    //     f8(static_cast<int &>(i));       // ok
-    //     f8(static_cast<const int &>(i)); // ok
-    //     // f8(static_cast<int &&>(i));    // error
-    //     f8(static_cast<const int &&>(i)); // ok (!)
-    //
-    //     // You can pass an r-value ref to a function expecting a const l-value ref.
-    //     // r-values are kind of like const l-values.
-    //
-    //     // Passing an r-value ref to a function expecting an l-value ref is not allowed
-    //     f9(i);
-    //     // f9(42);           // error
-    //     // f9(std::move(i)); // error
-    //
-    //     // Passing an r-value ref to a function expecting a const l-value ref is allowed !!!
-    //     f10(i);
-    //     f10(42);
-    //     f10(std::move(i));
-    //
-    //     std::cout << std::boolalpha;
-    //     std::cout << is_void<int>::value << std::endl;  // false
-    //     std::cout << is_void<void>::value << std::endl; // true
-    //
-    //     std::cout << is_array<int> << std::endl;        // false
-    //     std::cout << is_array<int[]> << std::endl;      // true
-    //
-    //     A<int *>   a1 [[maybe_unused]];                 // uses 1st partial specialization
-    //     A<int ***> a2 [[maybe_unused]];                 // uses 2nd partial specialization
-    //     A<void>    a3 [[maybe_unused]];                 // uses full specialization
-    //
-    //     // Kind of Template | Type deduction happens ? | Full specialization allowed ? | Partial specialization
-    //     allowed
-    //     // ? |
-    //     //
-    //     -----------------+--------------------------+-------------------------------+-----------------------------------
-    //     // Function         |         Yes              |            Yes                |             No | Class | No
-    //     |
-    //     // Yes                |             Yes                  | Variable         |         No               | Yes
-    //     |
-    //     // Yes                  | Alias            |         No               |            No                 | No |
-    //     //
-    //     -----------------+--------------------------+-------------------------------+-----------------------------------
-    //
-    //     // Variable templates are actually special kind of class templates. (Class templates with static member
-    //     // variable.)
-    //
-    //     std::cout << is_this_really_a_pointer(i) << std::endl;  // false
-    //     std::cout << is_this_really_a_pointer(&i) << std::endl; // true
-    //
-    //     {
-    //         // Dependent names
-    //
-    //         // C++'s grammar is not context-free.
-    //
-    //         using namespace dependent_names;
-    //
-    //         foo3<S1>(0);
-    //         foo4<S2>(0);
-    //     }
-    //
-    //     {
-    //         // Similarly to refer to a template
-    //
-    //         using namespace refer_to_template;
-    //
-    //         foo<S2>(42);
-    //     }
-    // }
+    {
+        using namespace function_templates_cannot_be_partially_specialized_1;
+
+        std::cout << "\n=== Function Templates can't be partially specialized - only fully! 1/2\n" << std::endl;
+
+        int i{};
+        std::cout << is_pointer(i) << std::endl;  // false
+        std::cout << is_pointer(&i) << std::endl; // true
+    }
+
+    {
+        using namespace function_templates_cannot_be_partially_specialized_2;
+
+        std::cout << "\n=== Function Templates can't be partially specialized - only fully! 2/2\n" << std::endl;
+
+        int i{};
+        std::cout << is_pointer(i) << std::endl;  // false
+        std::cout << is_pointer(&i) << std::endl; // true
+    }
+
+    {
+        using namespace how_to_partially_specialize_a_function;
+
+        std::cout << "\n=== Function Templates can't be partially specialized - only fully!\n" << std::endl;
+
+        int i{};
+        std::cout << is_pointer(i) << std::endl;  // false
+        std::cout << is_pointer(&i) << std::endl; // true
+    }
+
+    // End of Part 1
+
+    // Kind of Template | Type deduction | Full specialization allowed ? | Partial specialization allowed ? |
+    // -----------------+----------------+-------------------------------+-----------------------------------
+    //     Function     |     Yes        |            Yes                |             No                   |
+    //     Class        |     No         |            Yes                |             Yes                  |
+    //     Variable     |     No         |            Yes                |             Yes                  |
+    //     Alias        |     No         |            No                 |             No                   |
+    // -----------------+----------------+-------------------------------+-----------------------------------
 }
