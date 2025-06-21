@@ -1093,8 +1093,10 @@ main()
     // Kind of Template | Type deduction | Full specialization allowed ? | Partial specialization allowed ? |
     // -----------------+----------------+-------------------------------+-----------------------------------
     //     Function     |     Yes        |            Yes                |             No                   |
-    //     Class        |     No         |            Yes                |             Yes                  |
+    //     Class        |     No*        |            Yes                |             Yes                  |
     //     Variable     |     No         |            Yes                |             Yes                  |
     //     Alias        |     No         |            No                 |             No                   |
     // -----------------+----------------+-------------------------------+-----------------------------------
+
+    // * In C++17 we have CTAD = Class Template Argument Deduction
 }
